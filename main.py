@@ -1,6 +1,8 @@
 from qgis.PyQt.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QSlider, QLabel, 
-                                 QComboBox, QWidget, QListWidget, QListWidgetItem, QPushButton, QButtonGroup)
+                                 QComboBox, QWidget, QListWidget, QListWidgetItem, QPushButton, QButtonGroup,
+                                 QShortcut)
 from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtGui import QKeySequence
 from qgis.gui import QgsMapCanvas, QgsMapToolPan, QgsMapTool, QgsRubberBand
 from qgis.core import QgsProject, QgsWkbTypes, QgsGeometry, QgsFeature, QgsCoordinateTransform, QgsVectorLayerUtils
 from qgis.utils import iface
@@ -197,18 +199,34 @@ class StereoViewerDialog(QDialog):
         
         # 下部：コントロールエリア
         self.control_layout = QHBoxLayout()
-        self.control_layout.addWidget(QLabel("Select Right Image / 右画像を選択:"))
-        self.right_layer_cb = QComboBox()
-        self.control_layout.addWidget(self.right_layer_cb)
         
-        self.control_layout.addSpacing(30)
+        # 先に視差調整（Parallax Adjustment）を配置
         self.control_layout.addWidget(QLabel("Parallax Adjustment / 視差調整:"))
         self.offset_slider = QSlider(Qt.Horizontal)
         self.offset_slider.setMinimum(-5000)
         self.offset_slider.setMaximum(5000)
         self.offset_slider.setValue(0)
         self.offset_slider.setTickPosition(QSlider.TicksBelow)
+        self.offset_slider.setMinimumWidth(200)
         self.control_layout.addWidget(self.offset_slider)
+        
+        self.control_layout.addSpacing(20)
+        
+        # ★ スライダーとプルダウンの間にズームボタンを配置
+        self.btn_zoom_in = QPushButton("➕ Zoom In (F2)")
+        self.btn_zoom_out = QPushButton("➖ Zoom Out (F3)")
+        self.control_layout.addWidget(self.btn_zoom_in)
+        self.control_layout.addWidget(self.btn_zoom_out)
+        
+        self.control_layout.addSpacing(20)
+        
+        # 後に右画像選択（Select Right Image）を配置
+        self.control_layout.addWidget(QLabel("Select Right Image / 右画像を選択:"))
+        self.right_layer_cb = QComboBox()
+        self.control_layout.addWidget(self.right_layer_cb)
+        
+        # 右側に余白を作り、各要素が不自然に広がりすぎないようにする
+        self.control_layout.addStretch() 
         
         self.layout.addLayout(self.control_layout)
         
@@ -232,6 +250,22 @@ class StereoViewerDialog(QDialog):
         
         self.btn_pan.clicked.connect(self.set_pan_tool)
         self.btn_digitize.clicked.connect(self.set_digitize_tool)
+        
+        # ズームボタンとショートカットキーの接続
+        self.btn_zoom_in.clicked.connect(self.zoom_in)
+        self.btn_zoom_out.clicked.connect(self.zoom_out)
+        
+        self.shortcut_zoom_in = QShortcut(QKeySequence("F2"), self)
+        self.shortcut_zoom_in.activated.connect(self.zoom_in)
+        
+        self.shortcut_zoom_out = QShortcut(QKeySequence("F3"), self)
+        self.shortcut_zoom_out.activated.connect(self.zoom_out)
+
+    def zoom_in(self):
+        self.left_canvas.zoomIn()
+
+    def zoom_out(self):
+        self.left_canvas.zoomOut()
 
     def set_pan_tool(self):
         self.left_canvas.setMapTool(self.pan_tool_left)

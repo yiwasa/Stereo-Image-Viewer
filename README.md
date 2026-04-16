@@ -30,6 +30,7 @@
   * For image for the left eye, check the box in the layer list of the plugin window.
   * For image for the right eye, select it from the `Select Right Image` dropdown menu at the bottom. 
 * **Adjust Parallax**: Move the slider to align the left and right images to a position where stereoscopic viewing is comfortable for you.
+* **Zoom In/Out**: Use mouse/touchpad scrolling (two-finger swipe up/down), the on-screen zoom buttons, or the shortcut keys (F2: Zoom In, F3: Zoom Out).
 * **Digitize**: 
   * In the main QGIS window, select the target vector layer you want to draw on and **turn on Toggle Editing (pencil icon)**.
   * In the plugin window, select the "✏️ Digitize" button.
@@ -85,6 +86,7 @@ All final design decisions, verifications, and operational tests were strictly c
   * 左画面に表示したいレイヤは、左側リストのチェックボックスをONにします。
   * 右画面に表示したいレイヤは、下部の`右画像を選択`のプルダウンから選択します。
 * **視差の調整**: スライダーを動かし、左右の画像が立体視しやすい位置に合わせます。
+* **拡大・縮小**: マウスおよびタッチパッド（二本指で上下）のスクロールや拡大・縮小ボタン、ショートカットキー（F2:拡大、F3:縮小）で行うことができます。
 * **デジタイズ（作図）**: 
   * QGISのメイン画面で、作図したいベクタレイヤを選択し、**「編集モード（鉛筆アイコン）」をON**にします。
   * プラグイン画面で「✏️ Digitize / デジタイズ」ボタンを選択します。
