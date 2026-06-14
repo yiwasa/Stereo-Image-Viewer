@@ -4,7 +4,7 @@ from qgis.PyQt.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QSlider, QLa
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QKeySequence
 from qgis.gui import QgsMapCanvas, QgsMapToolPan, QgsMapTool, QgsRubberBand
-from qgis.core import QgsProject, QgsWkbTypes, QgsGeometry, QgsFeature, QgsCoordinateTransform, QgsVectorLayerUtils
+from qgis.core import QgsProject, QgsWkbTypes, QgsGeometry, QgsFeature, QgsCoordinateTransform, QgsVectorLayerUtils, Qgis
 from qgis.utils import iface
 
 # --- カスタムデジタイズツール ---
@@ -19,7 +19,7 @@ class SimpleDigitizeTool(QgsMapTool):
 
     def activate(self):
         super().activate()
-        self.canvas.setCursor(Qt.CrossCursor)
+        self.canvas.setCursor(Qt.CursorShape.CrossCursor)
 
     def deactivate(self):
         self.reset()
@@ -38,7 +38,7 @@ class SimpleDigitizeTool(QgsMapTool):
     def get_active_vector_layer(self):
         """QGIS本体で選択されていて、かつ「編集モード」のベクタレイヤを取得"""
         layer = iface.activeLayer()
-        if layer and layer.type() == layer.VectorLayer and layer.isEditable():
+        if layer and layer.type() == Qgis.LayerType.Vector and layer.isEditable():
             return layer
         return None
 
@@ -51,7 +51,7 @@ class SimpleDigitizeTool(QgsMapTool):
         self.geom_type = layer.geometryType()
         pt = self.toMapCoordinates(e.pos())
 
-        if e.button() == Qt.LeftButton:
+        if e.button() == Qt.MouseButton.LeftButton:
             # 左クリック：頂点の追加
             if self.geom_type == QgsWkbTypes.PointGeometry:
                 # ポイントの場合は1クリックで即時確定
@@ -59,18 +59,18 @@ class SimpleDigitizeTool(QgsMapTool):
             else:
                 if not self.rubber_band:
                     self.rubber_band = QgsRubberBand(self.canvas, self.geom_type)
-                    self.rubber_band.setColor(Qt.red)
+                    self.rubber_band.setColor(Qt.GlobalColor.red)
                     self.rubber_band.setWidth(2)
                 if not self.temp_rubber_band:
                     self.temp_rubber_band = QgsRubberBand(self.canvas, self.geom_type)
-                    self.temp_rubber_band.setColor(Qt.red)
+                    self.temp_rubber_band.setColor(Qt.GlobalColor.red)
                     self.temp_rubber_band.setWidth(1)
-                    self.temp_rubber_band.setLineStyle(Qt.DashLine)
+                    self.temp_rubber_band.setLineStyle(Qt.PenStyle.DashLine)
 
                 self.points.append(pt)
                 self.rubber_band.addPoint(pt, True)
 
-        elif e.button() == Qt.RightButton:
+        elif e.button() == Qt.MouseButton.RightButton:
             # 右クリック：図形の確定
             if self.geom_type in (QgsWkbTypes.LineGeometry, QgsWkbTypes.PolygonGeometry):
                 # ★属性ダイアログが立ち上がる前に赤い作図線を消す
@@ -188,8 +188,8 @@ class StereoViewerDialog(QDialog):
         self.canvas_layout = QHBoxLayout()
         self.left_canvas = QgsMapCanvas(self)
         self.right_canvas = QgsMapCanvas(self)
-        self.left_canvas.setCanvasColor(Qt.white)
-        self.right_canvas.setCanvasColor(Qt.white)
+        self.left_canvas.setCanvasColor(Qt.GlobalColor.white)
+        self.right_canvas.setCanvasColor(Qt.GlobalColor.white)
 
         self.canvas_layout.addWidget(self.left_canvas)
         self.canvas_layout.addWidget(self.right_canvas)
@@ -202,11 +202,11 @@ class StereoViewerDialog(QDialog):
         
         # 先に視差調整（Parallax Adjustment）を配置
         self.control_layout.addWidget(QLabel("Parallax Adjustment / 視差調整:"))
-        self.offset_slider = QSlider(Qt.Horizontal)
+        self.offset_slider = QSlider(Qt.Orientation.Horizontal)
         self.offset_slider.setMinimum(-5000)
         self.offset_slider.setMaximum(5000)
         self.offset_slider.setValue(0)
-        self.offset_slider.setTickPosition(QSlider.TicksBelow)
+        self.offset_slider.setTickPosition(QSlider.TickPosition.TicksBelow)
         self.offset_slider.setMinimumWidth(200)
         self.control_layout.addWidget(self.offset_slider)
         
@@ -281,8 +281,8 @@ class StereoViewerDialog(QDialog):
         if preserve_state:
             for i in range(self.layer_list_widget.count()):
                 item = self.layer_list_widget.item(i)
-                if item.checkState() == Qt.Checked:
-                    checked_layers.append(item.data(Qt.UserRole))
+                if item.checkState() == Qt.CheckState.Checked:
+                    checked_layers.append(item.data(Qt.ItemDataRole.UserRole))
             current_right_id = self.right_layer_cb.currentData()
 
         self.layer_list_widget.blockSignals(True)
@@ -295,19 +295,19 @@ class StereoViewerDialog(QDialog):
             layer = tree_layer.layer()
             if layer:
                 item = QListWidgetItem(layer.name())
-                item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+                item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
                 if preserve_state:
                     if layer.id() in checked_layers:
-                        item.setCheckState(Qt.Checked)
+                        item.setCheckState(Qt.CheckState.Checked)
                     else:
-                        item.setCheckState(Qt.Unchecked)
+                        item.setCheckState(Qt.CheckState.Unchecked)
                 else:
                     if tree_layer.isVisible():
-                        item.setCheckState(Qt.Checked)
+                        item.setCheckState(Qt.CheckState.Checked)
                     else:
-                        item.setCheckState(Qt.Unchecked)
+                        item.setCheckState(Qt.CheckState.Unchecked)
                         
-                item.setData(Qt.UserRole, layer.id())
+                item.setData(Qt.ItemDataRole.UserRole, layer.id())
                 self.layer_list_widget.addItem(item)
                 self.right_layer_cb.addItem(layer.name(), layer.id())
 
@@ -351,8 +351,8 @@ class StereoViewerDialog(QDialog):
         left_display_layers = []
         for i in range(self.layer_list_widget.count()):
             item = self.layer_list_widget.item(i)
-            if item.checkState() == Qt.Checked:
-                layer_id = item.data(Qt.UserRole)
+            if item.checkState() == Qt.CheckState.Checked:
+                layer_id = item.data(Qt.ItemDataRole.UserRole)
                 layer = QgsProject.instance().mapLayer(layer_id)
                 if layer:
                     left_display_layers.append(layer)
