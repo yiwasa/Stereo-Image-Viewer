@@ -99,6 +99,23 @@ class SimpleDigitizeTool(QgsMapTool):
                 self.temp_rubber_band.addPoint(pt, False)
                 self.temp_rubber_band.addPoint(self.points[0], True)
 
+    def keyPressEvent(self, e):
+        """キーボードイベント：Delete/Backspaceで直前の頂点を削除"""
+        if e.key() in (Qt.Key_Delete, Qt.Key_Backspace):
+            if len(self.points) > 0:
+                # 最後の頂点を削除
+                self.points.pop()
+                
+                # 赤いガイドライン（rubber_band）を更新
+                if self.rubber_band:
+                    self.rubber_band.reset()
+                    # 残っている頂点を再描画
+                    for pt in self.points:
+                        self.rubber_band.addPoint(pt, True)
+        
+        # イベントを親クラスへ渡す
+        super().keyPressEvent(e)
+
     def add_feature(self, layer, points):
         """図形を作成し、属性ダイアログを表示して確定する"""
         if not points: return
@@ -127,6 +144,10 @@ class SimpleDigitizeTool(QgsMapTool):
         
         # ★QGIS標準の「属性入力ダイアログ」を呼び出す
         dialog = iface.getFeatureForm(layer, feat)
+        
+        # ★ダイアログを「新規追加モード」に変更し、保存時のエラーを防ぐ
+        from qgis.gui import QgsAttributeEditorContext
+        dialog.setMode(QgsAttributeEditorContext.AddFeatureMode)
         
         # モーダルとして表示し、ユーザーが「OK」を押したか判定する
         if dialog.exec():
