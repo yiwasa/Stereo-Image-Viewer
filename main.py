@@ -121,7 +121,7 @@ class SimpleDigitizeTool(QgsMapTool):
 
     def keyPressEvent(self, e):
         """キーボードイベント：Delete/Backspaceで直前の頂点を削除"""
-        if e.key() in (Qt.Key_Delete, Qt.Key_Backspace):
+        if e.key() in (Qt.Key.Key_Delete, Qt.Key.Key_Backspace):
             if len(self.points) > 0:
                 # 最後の頂点を削除
                 self.points.pop()
