@@ -2,9 +2,9 @@ from qgis.PyQt.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QSlider, QLa
                                  QComboBox, QWidget, QListWidget, QListWidgetItem, QPushButton, QButtonGroup,
                                  QShortcut)
 from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtGui import QKeySequence
+from qgis.PyQt.QtGui import QKeySequence, QColor
 from qgis.gui import QgsMapCanvas, QgsMapToolPan, QgsMapTool, QgsRubberBand
-from qgis.core import QgsProject, QgsWkbTypes, QgsGeometry, QgsFeature, QgsCoordinateTransform, QgsVectorLayerUtils, Qgis
+from qgis.core import QgsProject, QgsWkbTypes, QgsGeometry, QgsFeature, QgsCoordinateTransform, QgsVectorLayerUtils, Qgis, QgsRenderContext
 from qgis.utils import iface
 
 # --- カスタムデジタイズツール ---
@@ -57,13 +57,33 @@ class SimpleDigitizeTool(QgsMapTool):
                 # ポイントの場合は1クリックで即時確定
                 self.add_feature(layer, [pt])
             else:
+                # レイヤの代表色を取得（取得できない場合はデフォルトの赤）
+                renderer = layer.renderer()
+                if renderer:
+                    # 描画コンテキストを作成して引数に渡す
+                    context = QgsRenderContext.fromMapSettings(self.canvas.mapSettings())
+                    symbol = renderer.symbolForFeature(QgsFeature(), context)
+                    
+                    # 万が一上記で取得できない場合のフォールバック（最初のシンボルを直接取得）
+                    if not symbol and renderer.symbols(context):
+                        symbol = renderer.symbols(context)[0]
+                        
+                    if symbol:
+                        layer_color = symbol.color()
+
+                # レイヤの色をベースに、外枠用と塗りつぶし用の色を作成
+                stroke_color = QColor(layer_color.red(), layer_color.green(), layer_color.blue())
+                fill_color = QColor(layer_color.red(), layer_color.green(), layer_color.blue(), 60) # アルファ値60で半透明
+                temp_color = QColor(layer_color.red(), layer_color.green(), layer_color.blue(), 150) # ガイド破線用
+
                 if not self.rubber_band:
                     self.rubber_band = QgsRubberBand(self.canvas, self.geom_type)
-                    self.rubber_band.setColor(Qt.GlobalColor.red)
-                    self.rubber_band.setWidth(2)
+                    self.rubber_band.setFillColor(fill_color)
+                    self.rubber_band.setStrokeColor(stroke_color)
+                    self.rubber_band.setWidth(1)
                 if not self.temp_rubber_band:
                     self.temp_rubber_band = QgsRubberBand(self.canvas, self.geom_type)
-                    self.temp_rubber_band.setColor(Qt.GlobalColor.red)
+                    self.temp_rubber_band.setColor(temp_color)
                     self.temp_rubber_band.setWidth(1)
                     self.temp_rubber_band.setLineStyle(Qt.PenStyle.DashLine)
 
@@ -101,7 +121,7 @@ class SimpleDigitizeTool(QgsMapTool):
 
     def keyPressEvent(self, e):
         """キーボードイベント：Delete/Backspaceで直前の頂点を削除"""
-        if e.key() in (Qt.Key_Delete, Qt.Key_Backspace):
+        if e.key() in (Qt.Key.Key_Delete, Qt.Key.Key_Backspace):
             if len(self.points) > 0:
                 # 最後の頂点を削除
                 self.points.pop()
